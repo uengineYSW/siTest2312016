@@ -41,7 +41,7 @@ public class OrderPlacementPolicyTest {
     private ApplicationContext applicationContext;
 
     @Autowired
-    public PaymentCompletedRepository repository;
+    public PaymentRepository repository;
 
     @Test
     @SuppressWarnings("unchecked")
