@@ -1,0 +1,84 @@
+server:
+  port: 8088
+
+---
+
+spring:
+  profiles: default
+  cloud:
+    gateway:
+#<<< API Gateway / Routes
+      routes:
+        - id: delivery-order
+          uri: http://localhost:8082
+          predicates:
+            - Path=/orders/**, /menuItems/**, 
+        - id: delivery-fulfillment
+          uri: http://localhost:8083
+          predicates:
+            - Path=/fulfillments/**, 
+        - id: order-status
+          uri: http://localhost:8084
+          predicates:
+            - Path=/orderStatuses/**, 
+        - id: payment-processing
+          uri: http://localhost:8085
+          predicates:
+            - Path=/payments/**, 
+        - id: frontend
+          uri: http://localhost:8080
+          predicates:
+            - Path=/**
+#>>> API Gateway / Routes
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        - id: delivery-order
+          uri: http://deliveryOrder:8080
+          predicates:
+            - Path=/orders/**, /menuItems/**, 
+        - id: delivery-fulfillment
+          uri: http://deliveryFulfillment:8080
+          predicates:
+            - Path=/fulfillments/**, 
+        - id: order-status
+          uri: http://orderStatus:8080
+          predicates:
+            - Path=/orderStatuses/**, 
+        - id: payment-processing
+          uri: http://paymentProcessing:8080
+          predicates:
+            - Path=/payments/**, 
+        - id: frontend
+          uri: http://frontend:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
