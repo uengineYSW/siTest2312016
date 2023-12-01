@@ -17,7 +17,6 @@ public class Payment {
     private String orderId;
 
     private Money amount;
-
     private boolean isCompleted;
 
     @PrePersist
@@ -30,14 +29,11 @@ public class Payment {
         return paymentRepository;
     }
 
-    //<<< Clean Arch / Port Method
     public void completePayment(CompletePaymentCommand completePaymentCommand) {
-        //implement business logic here:
+        this.amount = completePaymentCommand.getAmount();
+        this.isCompleted = true;
 
         PaymentCompleted paymentCompleted = new PaymentCompleted(this);
         paymentCompleted.publishAfterCommit();
     }
-    //>>> Clean Arch / Port Method
-
 }
-//>>> DDD / Aggregate Root
