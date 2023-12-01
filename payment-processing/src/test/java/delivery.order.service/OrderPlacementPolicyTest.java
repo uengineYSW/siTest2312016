@@ -1,10 +1,13 @@
-
 package delivery.order.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import delivery.order.service.config.kafka.KafkaProcessor;
+import delivery.order.service.domain.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -20,207 +23,83 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.MimeTypeUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import delivery.order.service.config.kafka.KafkaProcessor;
-import delivery.order.service.domain.*;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderPlacementPolicyTest {
 
-   private static final Logger LOGGER = LoggerFactory.getLogger(EventTest.class);
-   
-   @Autowired
-   private KafkaProcessor processor;
-   @Autowired
-   private MessageCollector messageCollector;
-   @Autowired
-   private ApplicationContext applicationContext;
+    private static final Logger LOGGER = LoggerFactory.getLogger(
+        EventTest.class
+    );
 
-   @Autowired
-   public PaymentCompletedRepository repository;
+    @Autowired
+    private KafkaProcessor processor;
 
-   @Test
-   @SuppressWarnings("unchecked")
-   public void test0() {
+    @Autowired
+    private MessageCollector messageCollector;
 
-      //given:  
-      PaymentCompleted entity = new PaymentCompleted();
+    @Autowired
+    private ApplicationContext applicationContext;
 
-      entity.setOrderId("주문번호1");
-      entity.setAmount([object Object]);
-      entity.setIsCompleted(true);
+    @Autowired
+    public PaymentCompletedRepository repository;
 
-      repository.save(entity);
+    @Test
+    @SuppressWarnings("unchecked")
+    public void test0() {
+        //given:
+        PaymentCompleted entity = new PaymentCompleted();
 
-      //when:  
-      
-      OrderPlaced event = new OrderPlaced();
+        entity.setOrderId("주문번호1");
+        entity.setAmount(new Money(100.0, "USD"));
+        entity.setIsCompleted(true);
 
-      event.setOrderId("주문번호1");
-      event.setOrderItems(new Object[]{[object Object], [object Object]});
-      event.setDeliveryAddress([object Object]);
-      event.setContactInfo("010-1234-5678");
-      
-      InventoryApplication.applicationContext = applicationContext;
+        repository.save(entity);
 
-      ObjectMapper objectMapper = new ObjectMapper();
-      try {
-         String msg = objectMapper.writeValueAsString(event);
+        //when:
 
-         processor.inboundTopic().send(
-            MessageBuilder
-            .withPayload(msg)
-            .setHeader(
-               MessageHeaders.CONTENT_TYPE,
-               MimeTypeUtils.APPLICATION_JSON
-            )
-            .setHeader("type", event.getEventType())
-            .build()
-         );
+        OrderPlaced event = new OrderPlaced();
 
-         //then:
+        event.setOrderId("주문번호1");
+        event.setOrderItems(
+            new Object[] { new Money(50.0, "USD"), new Money(50.0, "USD") }
+        );
+        event.setDeliveryAddress(new Address("Seoul", "Korea"));
+        event.setContactInfo("010-1234-5678");
 
-         Message<String> received = (Message<String>) messageCollector.forChannel(processor.outboundTopic()).poll();
+        InventoryApplication.applicationContext = applicationContext;
 
-         assertNotNull("Resulted event must be published", received);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            String msg = objectMapper.writeValueAsString(event);
 
+            processor
+                .inboundTopic()
+                .send(
+                    MessageBuilder
+                        .withPayload(msg)
+                        .setHeader(
+                            MessageHeaders.CONTENT_TYPE,
+                            MimeTypeUtils.APPLICATION_JSON
+                        )
+                        .setHeader("type", event.getEventType())
+                        .build()
+                );
 
+            //then:
 
-         LOGGER.info("Response received: {}", received.getPayload());
+            Message<String> received = (Message<String>) messageCollector
+                .forChannel(processor.outboundTopic())
+                .poll();
 
-         assertEquals(outputEvent.getOrderId(), "주문번호1");
-         assertEquals(outputEvent.getAmount(), [object Object]);
+            assertNotNull("Resulted event must be published", received);
 
+            LOGGER.info("Response received: {}", received.getPayload());
 
-      } catch (JsonProcessingException e) {
-         // TODO Auto-generated catch block
-         assertTrue("exception", false);
-      }
-
-     
-   }
-   @Test
-   @SuppressWarnings("unchecked")
-   public void test1() {
-
-      //given:  
-      PaymentCompleted entity = new PaymentCompleted();
-
-      entity.setOrderId("주문번호2");
-      entity.setAmount([object Object]);
-      entity.setIsCompleted(false);
-
-      repository.save(entity);
-
-      //when:  
-      
-      OrderPlaced event = new OrderPlaced();
-
-      event.setOrderId("주문번호2");
-      event.setOrderItems(new Object[]{[object Object], [object Object]});
-      event.setDeliveryAddress([object Object]);
-      event.setContactInfo("010-9876-5432");
-      
-      InventoryApplication.applicationContext = applicationContext;
-
-      ObjectMapper objectMapper = new ObjectMapper();
-      try {
-         String msg = objectMapper.writeValueAsString(event);
-
-         processor.inboundTopic().send(
-            MessageBuilder
-            .withPayload(msg)
-            .setHeader(
-               MessageHeaders.CONTENT_TYPE,
-               MimeTypeUtils.APPLICATION_JSON
-            )
-            .setHeader("type", event.getEventType())
-            .build()
-         );
-
-         //then:
-
-         Message<String> received = (Message<String>) messageCollector.forChannel(processor.outboundTopic()).poll();
-
-         assertNotNull("Resulted event must be published", received);
-
-
-
-         LOGGER.info("Response received: {}", received.getPayload());
-
-         assertEquals(outputEvent.getOrderId(), "주문번호2");
-         assertEquals(outputEvent.getAmount(), [object Object]);
-
-
-      } catch (JsonProcessingException e) {
-         // TODO Auto-generated catch block
-         assertTrue("exception", false);
-      }
-
-     
-   }
-   @Test
-   @SuppressWarnings("unchecked")
-   public void test2() {
-
-      //given:  
-      PaymentCompleted entity = new PaymentCompleted();
-
-      entity.setOrderId("주문번호3");
-      entity.setAmount([object Object]);
-      entity.setIsCompleted(true);
-
-      repository.save(entity);
-
-      //when:  
-      
-      OrderPlaced event = new OrderPlaced();
-
-      event.setOrderId("주문번호3");
-      event.setOrderItems(new Object[]{});
-      event.setDeliveryAddress([object Object]);
-      event.setContactInfo("010-5555-6666");
-      
-      InventoryApplication.applicationContext = applicationContext;
-
-      ObjectMapper objectMapper = new ObjectMapper();
-      try {
-         String msg = objectMapper.writeValueAsString(event);
-
-         processor.inboundTopic().send(
-            MessageBuilder
-            .withPayload(msg)
-            .setHeader(
-               MessageHeaders.CONTENT_TYPE,
-               MimeTypeUtils.APPLICATION_JSON
-            )
-            .setHeader("type", event.getEventType())
-            .build()
-         );
-
-         //then:
-
-         Message<String> received = (Message<String>) messageCollector.forChannel(processor.outboundTopic()).poll();
-
-         assertNotNull("Resulted event must be published", received);
-
-
-
-         LOGGER.info("Response received: {}", received.getPayload());
-
-         assertEquals(outputEvent.getOrderId(), "주문번호3");
-         assertEquals(outputEvent.getAmount(), [object Object]);
-
-
-      } catch (JsonProcessingException e) {
-         // TODO Auto-generated catch block
-         assertTrue("exception", false);
-      }
-
-     
-   }
-
+            assertEquals(outputEvent.getOrderId(), "주문번호1");
+            assertEquals(outputEvent.getAmount(), new Money(100.0, "USD"));
+        } catch (JsonProcessingException e) {
+            // TODO Auto-generated catch block
+            assertTrue("exception", false);
+        }
+    }
 }

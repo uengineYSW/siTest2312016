@@ -29,11 +29,13 @@ public class Payment {
         return paymentRepository;
     }
 
+    //<<< Clean Arch / Port Method
     public void completePayment(CompletePaymentCommand completePaymentCommand) {
-        this.amount = completePaymentCommand.getAmount();
         this.isCompleted = true;
-
         PaymentCompleted paymentCompleted = new PaymentCompleted(this);
         paymentCompleted.publishAfterCommit();
     }
+    //>>> Clean Arch / Port Method
+
 }
+//>>> DDD / Aggregate Root
